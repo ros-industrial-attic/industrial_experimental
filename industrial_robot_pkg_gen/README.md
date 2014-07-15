@@ -1,4 +1,4 @@
-This package is an experimental package to help automate the creation of motoman packages.  This package incorporates the following standard procedures:
+This package is an experimental package to help automate the creation of ROS-Industrial robot packages.  This package incorporates the following standard procedures:
 
 Standardize URDFs – see http://wiki.ros.org/Industrial/Tutorials/Create%20a%20URDF%20for%20an%20Industrial%20Robot
 
@@ -9,7 +9,7 @@ Standardize moveit config packages – see http://wiki.ros.org/Industrial/Tutori
 Here is the suggested work flow:
 
 1.	Create a URDF
-1.	Run: rosrun motoman_package_generator motoman_package_generator <robot model> <author> <author_email>
+1.	Run: rosrun industrial_robot_pkg_gen package_generator <robot model> <author> <author_email>
 1.	Select option 1:
 1.	Fill in model specific information in the generated package:
  1.	joint_names.yaml
