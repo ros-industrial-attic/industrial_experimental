@@ -1,27 +1,16 @@
 #!/usr/bin/env python
 
-# CMakeList.txt macro
-# package - name of the package
-CMAKELIST_MACRO="""
-cmake_minimum_required(VERSION 2.8.3)
+import em
 
-project(${package})
-
-find_package(catkin REQUIRED)
-
-catkin_package()
-
-find_package(roslaunch)
-roslaunch_add_file_check(test/launch_test.xml)
-
-foreach(dir config launch meshes urdf)
-   install(DIRECTORY ${dir}/
-      DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
-endforeach(dir)
-"""
-
-def cmakelist(package):
-  rtn = CMAKELIST_MACRO.replace("${package}", package)
+def cmakelist(package, template_path):
+  template_file = template_path + "/CMakeLists.empy"
+  print("Loading template file: " + template_file)
+  em_buffer = {}
+  em.expand('@{package = "' + package + '"}', em_buffer)
+  
+  f = open(template_file, 'r')
+  rtn = em.expand(f.read(), em_buffer)
+  print("Resulting file: " + rtn )
   return rtn
 
 
@@ -78,7 +67,7 @@ PACKAGE_XML_MACRO="""
  </export>
 </package>
 """
-def package_xml(package, model, author, author_email, version):
+def package_xml(package, model, author, author_email, version, template_path):
   rtn = PACKAGE_XML_MACRO.replace("${package}", package)
   rtn = rtn.replace("${model}", model)
   rtn = rtn.replace("${author}", author)

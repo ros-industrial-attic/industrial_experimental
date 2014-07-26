@@ -1,0 +1,10 @@
+controller_joint_names: [ 
+@[for JOINT in range(1, 6)] joint_@JOINT@[end for]
+joint_6]
+
+
+@# @{
+@# for i in range(@num_joints-1):
+@#   print "joint_" + i + ","
+@# print "joint_" + i
+@# }@ ]
