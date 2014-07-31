@@ -469,6 +469,9 @@ class moveit_package_generator(base_package_generator):
     self.__generate_empy_file__(em_params, template_path, "controllers.empy", file_path, "controller.yaml")
     
   def __setup_assistant__(self):
+    print("The following will open a webpage with instructions on how to create a MoveIt package as well as initiate the MoveIt setup assistant.")
+    raw_input("Press any key to continue:")
+    os.system("gnome-open http://wiki.ros.org/Industrial/Tutorials/Create_a_MoveIt_Pkg_for_an_Industrial_Robot")
     os.system("roslaunch moveit_setup_assistant setup_assistant.launch")
 
 
