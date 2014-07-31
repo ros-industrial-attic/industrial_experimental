@@ -7,14 +7,14 @@ import rospkg
 from generators import *
      
 """
-cmd_line_interface
+CmdLineInterface
 
 This class encapsulates the package generator command line interface (CLI).  
 Sub-commands are added via the add_sub_cmd method.  This allows the class
 to dynamically add commands for package generation (including specialized
 commands for specific packages).
 """  
-class cmd_line_interface:
+class CmdLineInterface:
 
 
   """
@@ -40,12 +40,12 @@ class cmd_line_interface:
 
 
 """
-sub_cmd_base
+SubCmdBase
 
 This base class is an interface definition for sub commands entered on the
 command line.  This class encapsulates parsing and execution methods.
 """
-class sub_cmd_base:
+class SubCmdBase:
   
   def __init__(self, subparser):
     pass
@@ -53,13 +53,13 @@ class sub_cmd_base:
   def add_to_subparser(self, subparser):
     pass
     
-  def __execute__(self):
+  def _execute(self):
     pass
     
 """
-support_sub_cmd
+SupportSubCmd
 """
-class support_sub_cmd(sub_cmd_base):
+class SupportSubCmd(SubCmdBase):
 
   def __init__(self):
     self.name = 'support'
@@ -71,9 +71,9 @@ class support_sub_cmd(sub_cmd_base):
     parser_support.add_argument('--pkg_vers', default= '0.0.1', help='package version number')
     parser_support.add_argument('--author', default= None, help='author name')
     parser_support.add_argument('--prefix', default= None, help='prefix to be added to package name (typically meta-package name)')
-    parser_support.set_defaults(func=self.__execute__)
+    parser_support.set_defaults(func=self._execute)
     
-  def __execute__(self, args):
+  def _execute(self, args):
     print(args)
 
     # allows us to get the package path
@@ -84,15 +84,15 @@ class support_sub_cmd(sub_cmd_base):
     # Author email used in place of empty author name
     if(not args.author): args.author = args.email
     
-    generator = support_package_generator()
+    generator = SupportPackageGenerator()
     generator.generate_package(args.prefix, args.model, args.num_joints, args.author, args.email, args.pkg_vers, template_path)
 
     
 
 """
-moveit_sub_cmd
+MoveitSubCmd
 """
-class moveit_sub_cmd(sub_cmd_base):
+class MoveitSubCmd(SubCmdBase):
 
   def __init__(self):
     self.name = 'moveit'
@@ -102,9 +102,9 @@ class moveit_sub_cmd(sub_cmd_base):
     parser.add_argument('model', help='robot model number')
     parser.add_argument('--prefix', default= None, help='prefix to be added to package name (typically meta-package name)')
     parser.add_argument('--setup', default=True, help='True by default.  If true, moveit setup assistant is called by script')
-    parser.set_defaults(func=self.__execute__)
+    parser.set_defaults(func=self._execute)
     
-  def __execute__(self, args):
+  def _execute(self, args):
     print(args)
 
     # allows us to get the package path
@@ -112,6 +112,6 @@ class moveit_sub_cmd(sub_cmd_base):
     template_path = rospack.get_path(args.t_pkg) + '/' + args.t_path
     print("Template path: " + template_path)
         
-    generator = moveit_package_generator()
+    generator = MoveitPackageGenerator()
     generator.generate_package(args.prefix, args.model, args.num_joints, args.setup, template_path)
 

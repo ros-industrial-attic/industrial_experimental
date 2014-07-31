@@ -5,9 +5,9 @@ from cmd_line_interface import *
 
 if __name__ == '__main__':
 
-  cli = cmd_line_interface()
-  cli.add_sub_cmd(support_sub_cmd())
-  cli.add_sub_cmd(moveit_sub_cmd())
+  cli = CmdLineInterface()
+  cli.add_sub_cmd(SupportSubCmd())
+  cli.add_sub_cmd(MoveitSubCmd())
   cli.run()
 
 
