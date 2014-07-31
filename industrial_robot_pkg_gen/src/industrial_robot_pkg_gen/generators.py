@@ -63,15 +63,15 @@ class SupportPackageGenerator(BasePackageGenerator):
     #Populate package/config directory
     file_path = package + "/config"
     mkdir(file_path)
-    self._generate_joint_names_yaml(em_params, template_path, file_path)
+    self._generate_joint_names_yaml(em_params, template_path, file_path, model)
 
     #Populate package/launch directory
     file_path = package + "/launch"
     mkdir(file_path)
-    self._generate_load_launch(em_params, template_path, file_path)
-    self._generate_interface_launch(em_params, template_path, file_path)
-    self._generate_visualize_launch(em_params, template_path, file_path)
-    self._generate_test_model_launch(em_params, template_path, file_path)
+    self._generate_load_launch(em_params, template_path, file_path, model)
+    self._generate_interface_launch(em_params, template_path, file_path, model)
+    self._generate_visualize_launch(em_params, template_path, file_path, model)
+    self._generate_test_model_launch(em_params, template_path, file_path, model)
     #Populate package/meshes directory
     mkdir(package + "/meshes")
     mkdir(package + "/meshes/" + model)
@@ -107,26 +107,26 @@ class SupportPackageGenerator(BasePackageGenerator):
   def _generate_package_xml(self, em_params, template_path, file_path):
     self._generate_empy_file(em_params, template_path, "package.empy", file_path, "package.xml")
     
-  def _generate_joint_names_yaml(self, em_params, template_path, file_path):
-    file_name = "joint_names_" + em_params.get('model') + ".yaml"
+  def _generate_joint_names_yaml(self, em_params, template_path, file_path, model):
+    file_name = "joint_names_" + model + ".yaml"
     self._generate_empy_file(em_params, template_path, "joint_names.empy", file_path, file_name)
 
-  def _generate_load_launch(self, em_params, template_path, file_path):
-    file_name = "load_" + em_params.get('model')  + ".launch"
+  def _generate_load_launch(self, em_params, template_path, file_path, model):
+    file_name = "load_" + model  + ".launch"
     self._generate_empy_file(em_params, template_path, "load_launch.empy", file_path, file_name)
     
-  def _generate_interface_launch(self, em_params, template_path, file_path):
-    file_name = "robot_streaming_interface_" + em_params.get('model') + ".launch"
+  def _generate_interface_launch(self, em_params, template_path, file_path, model):
+    file_name = "robot_streaming_interface_" + model + ".launch"
     self._generate_empy_file(em_params, template_path, "streaming_interface.empy", file_path, file_name)
-    file_name = "robot_download_interface_" + em_params.get('model') + ".launch"
+    file_name = "robot_download_interface_" + model + ".launch"
     self._generate_empy_file(em_params, template_path, "download_interface.empy", file_path, file_name)
 
-  def _generate_visualize_launch(self, em_params, template_path, file_path):
-    file_name = "robot_state_visualize_" + em_params.get('model')  + ".launch"
+  def _generate_visualize_launch(self, em_params, template_path, file_path, model):
+    file_name = "robot_state_visualize_" + model  + ".launch"
     self._generate_empy_file(em_params, template_path, "robot_state_visualize.empy", file_path, file_name)
 
-  def _generate_test_model_launch(self, em_params, template_path, file_path):
-    file_name = "test_" + em_params.get('model')  + ".launch"
+  def _generate_test_model_launch(self, em_params, template_path, file_path, model):
+    file_name = "test_" + model  + ".launch"
     self._generate_empy_file(em_params, template_path, "test_model.empy", file_path, file_name)
 
   def _generate_launch_test(self, em_params, template_path, file_path):
