@@ -21,13 +21,12 @@ class CmdLineInterface:
   Constructor command line interface object
   
   """
-  def __init__(self):
+  def __init__(self, def_t_paths = ['industrial_robot_pkg_gen/resources'], def_num_joints = 6):
     
     self.parser = argparse.ArgumentParser(description='Creates ROS-Industrial vendor robot package')
-    self.parser.add_argument('--t_pkg', default= 'industrial_robot_pkg_gen', help='package that contains templates')
-    self.parser.add_argument('--t_path', default= 'resources', help='templates(*.empy) path, relative to package specified by t_pkg argument')
-    self.parser.add_argument('--num_joints', type=int, default=6, help='number of robot dof(joints)')
-    self.subparsers = self.parser.add_subparsers()
+    self.parser.add_argument('--t_paths', nargs='*', default = def_t_paths, help='templates(<package>/<local_path> path(s)(in order), default:=' + str(def_t_paths) )
+    self.parser.add_argument('--num_joints', type=int, default = def_num_joints, help='number of robot dof(joints), default:=' + str(def_num_joints) )
+    self.subparsers = self.parser.add_subparsers()    
 
   def add_sub_cmd(self, sub_cmd):
     sub_cmd.add_to_subparser(self.subparsers)
@@ -47,14 +46,28 @@ command line.  This class encapsulates parsing and execution methods.
 """
 class SubCmdBase:
   
-  def __init__(self, subparser):
+  def __init__(self):
     pass
     
   def add_to_subparser(self, subparser):
     pass
     
+  def _eval_t_paths(self, t_paths):
+    
+    template_paths = []
+    for template_path in t_paths:
+      template_path_split = template_path.split('/', 1)
+      package = template_path_split[0]
+      path = template_path_split[1]
+      rospack = rospkg.RosPack()
+      full_path = rospack.get_path(package) + '/' + path
+      template_paths.append(full_path)
+    print("Template path(s): " + str(template_paths) )
+    return template_paths
+    
   def _execute(self):
     pass
+    
     
 """
 SupportSubCmd
@@ -75,17 +88,14 @@ class SupportSubCmd(SubCmdBase):
     
   def _execute(self, args):
     print(args)
-
-    # allows us to get the package path
-    rospack = rospkg.RosPack()
-    template_path = rospack.get_path(args.t_pkg) + '/' + args.t_path
-    print("Template path: " + template_path)
+    
+    template_paths = self._eval_t_paths(args.t_paths)
     
     # Author email used in place of empty author name
     if(not args.author): args.author = args.email
     
     generator = SupportPackageGenerator()
-    generator.generate_package(args.prefix, args.model, args.num_joints, args.author, args.email, args.pkg_vers, template_path)
+    generator.generate_package(args.prefix, args.model, args.num_joints, args.author, args.email, args.pkg_vers, template_paths)
 
     
 
@@ -107,11 +117,8 @@ class MoveitSubCmd(SubCmdBase):
   def _execute(self, args):
     print(args)
 
-    # allows us to get the package path
-    rospack = rospkg.RosPack()
-    template_path = rospack.get_path(args.t_pkg) + '/' + args.t_path
-    print("Template path: " + template_path)
+    template_paths = self._eval_t_paths(args.t_paths)
         
     generator = MoveitPackageGenerator()
-    generator.generate_package(args.prefix, args.model, args.num_joints, args.setup, template_path)
+    generator.generate_package(args.prefix, args.model, args.num_joints, args.setup, template_paths)
 
