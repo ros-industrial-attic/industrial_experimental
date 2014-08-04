@@ -21,10 +21,11 @@ class CmdLineInterface:
   Constructor command line interface object
   
   """
-  def __init__(self, def_t_paths = ['industrial_robot_pkg_gen/resources'], def_num_joints = 6):
+  def __init__(self, def_t_paths = ['industrial_robot_pkg_gen/resources'], def_num_joints = 6, def_prefix = None):
     
     self.parser = argparse.ArgumentParser(description='Creates ROS-Industrial vendor robot package')
     self.parser.add_argument('--t_paths', nargs='*', default = def_t_paths, help='templates(<package>/<local_path> path(s)(in order), default:=' + str(def_t_paths) )
+    self.parser.add_argument('--prefix', default= def_prefix, help='prefix to be added to package name (typically meta-package name), default:=' + str(def_prefix) )
     self.parser.add_argument('--num_joints', type=int, default = def_num_joints, help='number of robot dof(joints), default:=' + str(def_num_joints) )
     self.subparsers = self.parser.add_subparsers()    
 
@@ -83,7 +84,6 @@ class SupportSubCmd(SubCmdBase):
     parser_support.add_argument('email', help='author email')
     parser_support.add_argument('--pkg_vers', default= '0.0.1', help='package version number')
     parser_support.add_argument('--author', default= None, help='author name')
-    parser_support.add_argument('--prefix', default= None, help='prefix to be added to package name (typically meta-package name)')
     parser_support.set_defaults(func=self._execute)
     
   def _execute(self, args):
@@ -110,7 +110,6 @@ class MoveitSubCmd(SubCmdBase):
   def add_to_subparser(self, subparser):
     parser = subparser.add_parser(self.name, description='Creates ROS-Industrial support package')
     parser.add_argument('model', help='robot model number')
-    parser.add_argument('--prefix', default= None, help='prefix to be added to package name (typically meta-package name)')
     parser.add_argument('--setup', default=True, help='True by default.  If true, moveit setup assistant is called by script')
     parser.set_defaults(func=self._execute)
     
