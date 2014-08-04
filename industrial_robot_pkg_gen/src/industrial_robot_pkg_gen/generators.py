@@ -20,6 +20,8 @@ class BasePackageGenerator():
       template_file = template_path + "/" + template_name
       try:
         f = open(template_file, 'r')
+        #quit loop on first successful open
+        break  
       except IOError:
         pass
     print("Loading template file: " + template_file)
@@ -84,7 +86,8 @@ class SupportPackageGenerator(BasePackageGenerator):
     mkdir(package + "/meshes/" + model + "/collision")
     mkdir(package + "/meshes/" + model + "/visual")
     #Populate package/test directory
-    mkdir(package + "/test")
+    file_path = package + "/test"
+    mkdir(file_path)
     self._generate_launch_test(em_params, template_paths, file_path)
     mkdir(package + "/urdf")
     touch(package + "/urdf/" + model + ".urdf")
@@ -122,9 +125,9 @@ class SupportPackageGenerator(BasePackageGenerator):
     self._generate_empy_file(em_params, template_paths, "load_launch.empy", file_path, file_name)
     
   def _generate_interface_launch(self, em_params, template_paths, file_path, model):
-    file_name = "robot_streaming_interface_" + model + ".launch"
+    file_name = "robot_interface_streaming_" + model + ".launch"
     self._generate_empy_file(em_params, template_paths, "streaming_interface.empy", file_path, file_name)
-    file_name = "robot_download_interface_" + model + ".launch"
+    file_name = "robot_interface_download_" + model + ".launch"
     self._generate_empy_file(em_params, template_paths, "download_interface.empy", file_path, file_name)
 
   def _generate_visualize_launch(self, em_params, template_paths, file_path, model):
