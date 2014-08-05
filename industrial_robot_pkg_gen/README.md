@@ -11,10 +11,10 @@ Detailed help can be found by running ```rosrun industrial_robot_pkg_gen package
 Here is the suggested work flow:
 
 1.	Create a URDF
-1.	Run: rosrun industrial_robot_pkg_gen package_generator support with associated parameters.
+1.	Run: ```rosrun industrial_robot_pkg_gen package_generator support``` with associated parameters.
 1.	Fill in model specific information in the generated package:
  1.	collision/visual meshes
  1.	urdf and macros (should match naming convention of other packages)
-1.	Run: rosrun industrial_robot_pkg_gen package_generator moveit with associated parameters.
+1.	Run: ```rosrun industrial_robot_pkg_gen package_generator moveit``` with associated parameters.
 1.	Fill in model specific parameters for the moveit config
  1.	Check joint_limits.yaml for proper values
