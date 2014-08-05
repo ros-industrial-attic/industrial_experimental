@@ -60,7 +60,7 @@ class SupportPackageGenerator(BasePackageGenerator):
       package = model + '_support'
       
     #Load arguments into em params
-    em_params = self._load_em_params(package, model, num_joints, author, author_email, version)
+    em_params = self._load_em_params(package, model, num_joints, author, author_email, version, prefix)
         
     #Populate package root directory
     file_path = package
@@ -97,7 +97,7 @@ class SupportPackageGenerator(BasePackageGenerator):
     print("TODO: ADD COLLISION/VISUAL MESHES")
     print("TODO: FILL IN URDF MACROS/URDFS")
     
-  def _load_em_params(self, package, model, num_joints, author, author_email, version):
+  def _load_em_params(self, package, model, num_joints, author, author_email, version, prefix):
     
     #Load empy parameters
     em_params = {}
@@ -107,6 +107,7 @@ class SupportPackageGenerator(BasePackageGenerator):
     em.expand('@{author = "' + author + '"}', em_params)
     em.expand('@{email = "' + author_email + '"}', em_params)
     em.expand('@{pkg_vers = "' + version + '"}', em_params)
+    em.expand('@{prefix = "' + prefix + '"}', em_params)
     
     return em_params
     
@@ -214,7 +215,7 @@ class MoveitPackageGenerator(BasePackageGenerator):
     
   
   def _generate_controllers_yaml(self, em_params, template_paths, file_path):
-    self._generate_empy_file(em_params, template_paths, "controllers.empy", file_path, "controller.yaml")
+    self._generate_empy_file(em_params, template_paths, "controllers.empy", file_path, "controllers.yaml")
     
   def _setup_assistant(self):
     print("The following will open a webpage with instructions on how to create a MoveIt package as well as initiate the MoveIt setup assistant.")
