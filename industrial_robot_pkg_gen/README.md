@@ -1,10 +1,10 @@
-This package is an experimental package to help automate the creation of ROS-Industrial robot packages.  This package incorporates the following standard procedures:
+This package is an experimental package to help automate the creation of ROS-Industrial robot support packages.  This package incorporates the following standard procedures:
 
 Standardize URDFs – see http://wiki.ros.org/Industrial/Tutorials/Create%20a%20URDF%20for%20an%20Industrial%20Robot
 
-Standardize directory structure – see http://wiki.ros.org/Industrial/Tutorials/SuggestedPackageLayoutNewRepositories
+Standardize Directory Structure – see http://wiki.ros.org/Industrial/Tutorials/SuggestedPackageLayoutNewRepositories
 
-Standardize moveit config packages – see http://wiki.ros.org/Industrial/Tutorials/Create_a_MoveIt_Pkg_for_an_Industrial_Robot
+Standardize MoveIt Config Packages – see http://wiki.ros.org/Industrial/Tutorials/Create_a_MoveIt_Pkg_for_an_Industrial_Robot
 
 Here is the suggested work flow:
 

@@ -8,11 +8,11 @@
     robot_interface_streaming_@(model).launch robot_ip:=<value>
 -->
 <launch>
-	<arg name="robot_ip" />
+  <arg name="robot_ip" />
 
-	<rosparam command="load" file="$(find @(package))/config/joint_names_@(model).yaml" />
+  <rosparam command="load" file="$(find @(package))/config/joint_names_@(model).yaml" />
 
-	<include file="$(find motoman_driver)/launch/robot_interface_streaming.launch">
-		<arg name="robot_ip"   value="$(arg robot_ip)" />
-	</include>
+  <include file="$(find motoman_driver)/launch/robot_interface_streaming.launch">
+    <arg name="robot_ip"   value="$(arg robot_ip)" />
+  </include>
 </launch>

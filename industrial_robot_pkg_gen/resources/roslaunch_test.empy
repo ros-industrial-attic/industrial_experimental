@@ -26,26 +26,26 @@
   testing multpile launch files
 -->
 <launch>
-	<arg name="req_arg" value="default"/>
+  <arg name="req_arg" value="default"/>
 
   <group ns="load_@(model)">
-	  <include file="$(find @(package))/launch/load_@(model).launch"/>
+    <include file="$(find @(package))/launch/load_@(model).launch"/>
   </group>
 
   <group ns="test_@(model)">
-	  <include file="$(find @(package))/launch/test_@(model).launch"/>
+    <include file="$(find @(package))/launch/test_@(model).launch"/>
   </group>
 
 
   <group ns="robot_interface_streaming_@(model)">
     <include file="$(find @(package))/launch/robot_interface_streaming_@(model).launch">
-	    <arg name="robot_ip"   value="$(arg req_arg)" />
+      <arg name="robot_ip" value="$(arg req_arg)" />
     </include>
   </group>
 
   <group ns="robot_state_visualize_@(model)">
     <include file="$(find @(package))/launch/robot_state_visualize_@(model).launch">
-	    <arg name="robot_ip"   value="$(arg req_arg)" />
+      <arg name="robot_ip" value="$(arg req_arg)" />
     </include>
   </group>
 

@@ -140,7 +140,7 @@ class SupportPackageGenerator(BasePackageGenerator):
     self._generate_empy_file(em_params, template_paths, "test_model.empy", file_path, file_name)
 
   def _generate_launch_test(self, em_params, template_paths, file_path):
-    self._generate_empy_file(em_params, template_paths, "launch_test.empy", file_path, "launch_test.xml")
+    self._generate_empy_file(em_params, template_paths, "roslaunch_test.empy", file_path, "roslaunch_test.xml")
 
     
     
