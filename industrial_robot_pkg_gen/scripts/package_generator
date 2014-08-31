@@ -9,6 +9,3 @@ if __name__ == '__main__':
   cli.add_sub_cmd(SupportSubCmd())
   cli.add_sub_cmd(MoveitSubCmd())
   cli.run()
-
-
-
