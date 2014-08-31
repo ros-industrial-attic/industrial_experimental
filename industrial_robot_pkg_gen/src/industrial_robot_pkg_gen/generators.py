@@ -58,6 +58,7 @@ class SupportPackageGenerator(BasePackageGenerator):
       package = prefix + '_' + model + '_support'
     else:
       package = model + '_support'
+      prefix = ''
       
     #Load arguments into em params
     em_params = self._load_em_params(package, model, num_joints, author, author_email, version, prefix)

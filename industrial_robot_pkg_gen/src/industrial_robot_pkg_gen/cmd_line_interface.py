@@ -21,7 +21,7 @@ class CmdLineInterface:
   Constructor command line interface object
   
   """
-  def __init__(self, def_t_paths = ['industrial_robot_pkg_gen/resources'], def_num_joints = 6, def_prefix = None):
+  def __init__(self, def_t_paths = ['industrial_robot_pkg_gen/templates'], def_num_joints = 6, def_prefix = None):
     
     self.parser = argparse.ArgumentParser(description='Creates ROS-Industrial vendor robot package')
     
