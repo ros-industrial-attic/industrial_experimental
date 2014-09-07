@@ -1,0 +1,18 @@
+<!--
+  Manipulator specific version of 'robot_interface_streaming.launch'.
+
+  Defaults provided for @(model):
+   - @(num_joints) joints
+
+  Usage:
+    robot_interface_streaming_@(model).launch robot_ip:=<value>
+-->
+<launch>
+  <arg name="robot_ip" />
+
+  <rosparam command="load" file="$(find @(package))/config/joint_names_@(model).yaml" />
+
+  <include file="$(find motoman_driver)/launch/robot_interface_streaming.launch">
+    <arg name="robot_ip"   value="$(arg robot_ip)" />
+  </include>
+</launch>

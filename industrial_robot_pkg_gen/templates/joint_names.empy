@@ -1,0 +1,1 @@
+controller_joint_names: [@[for JOINT in range(1, int(num_joints))] 'joint_@JOINT',@[end for] 'joint_@(num_joints)']

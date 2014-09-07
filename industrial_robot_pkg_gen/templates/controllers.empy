@@ -1,0 +1,5 @@
+controller_list:
+  - name: ""
+    action_ns: joint_trajectory_action
+    type: FollowJointTrajectory
+    joints: [@[for JOINT in range(1, int(num_joints))] joint_@JOINT,@[end for] joint_@(num_joints)]
