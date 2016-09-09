@@ -331,6 +331,11 @@ bool ByteArray::unload(void* value, shared_int byteSize)
  // be used sparingly, as they are expensive.
  //
  */
+bool ByteArray::unloadFront(shared_bool & value)
+{
+  shared_bool rtn = this->unloadFront(&value, sizeof(shared_bool));
+  return rtn;
+}
 bool ByteArray::unloadFront(industrial::shared_types::shared_real &value)
 {
   bool rtn = this->unloadFront(&value, sizeof(shared_real));

@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- * Copyright (c) 2012, Southwest Research Institute
+ * Copyright (c) 2015, Southwest Research Institute
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,11 +36,35 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <XmlRpcValue.h>
 
 namespace industrial_utils
 {
 namespace param
 {
+
+/**
+ * \brief ROS-to-Controller mapping info
+ */
+class JointGroupMap
+{
+  public:
+    int                      group_id;
+    std::string              ns;
+    std::vector<std::string> joints;
+
+    JointGroupMap() : group_id(0), ns(), joints() {}
+
+    JointGroupMap(int group_id, std::string ns, std::vector<std::string> joints)
+    {
+      this->group_id = group_id;
+      this->ns = ns;
+      this->joints = joints;
+    }
+
+    bool parse(const XmlRpc::XmlRpcValue value);
+    std::string toString();
+};
 
 /**
  * \brief Gets parameter list as vector of strings
@@ -53,19 +77,58 @@ namespace param
 bool getListParam(const std::string param_name, std::vector<std::string> & list_param);
 
 /**
+ * \brief Gets parameter list as vector of JointGroupMaps
+ *
+ * \param param_name name of list parameter
+ * \param list_param populated with parameter value(s)
+ *
+ * \return true if parameter
+ */
+bool getListParam(const std::string param_name,
+                  std::vector<JointGroupMap> & list_param);
+
+/**
+ * \brief Gets parameter list as vector of strings
+ *
+ * \param value contents of parameter value
+ * \param list_param populated with parameter value(s)
+ *
+ * \return true if parameter
+ */
+bool getListParam(XmlRpc::XmlRpcValue rpc_list,
+                  std::vector<std::string> & list_param);
+
+/**
  * \brief Tries to get a set of joint names using several fallback methods:
  *          1) check parameter for an explicit list
  *          2) try to parse from given URDF data
  *          3) use default joint names: ["joint_1", "joint_2", ..., "joint_6"]
  *
  * \param[in] joint_list_param name of joint-names-list parameter to check
+ *               - pass empty string to use default parameter name
  * \param[in] urdf_param name of URDF description parameter to check
+ *               - pass empty string to use default parameter name
  * \param[out] joint_names list of joint names
  *
  * \return true if parameter found, false if defaults used
  */
 bool getJointNames(const std::string joint_list_param, const std::string urdf_param,
 		           std::vector<std::string> & joint_names);
+
+/**
+ * \brief Tries to get a map of namespaces and joint-names to controller-groups
+ * using several fallback methods:
+ *          1) check parameter for an explicit map
+ *          2) try "single group" methods using getJointNames()
+ *
+ * \param[in] joint_map_param name of joint-names-map parameter to check
+ *               - pass empty string to use default parameter name
+ * \param[out] joint_map list of joint-group map data
+ *
+ * \return true if parameter found, false if defaults used
+ */
+bool getJointMap(const std::string joint_map_param,
+                 std::vector<JointGroupMap> & joint_map);
 
 /**
  * \brief Tries to read joint velocity limits from the specified URDF parameter

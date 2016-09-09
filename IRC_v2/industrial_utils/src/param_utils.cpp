@@ -42,46 +42,83 @@ namespace param
 {
 bool getListParam(const std::string param_name, std::vector<std::string> & list_param)
 {
-  bool rtn = false;
   XmlRpc::XmlRpcValue rpc_list;
 
   list_param.clear(); //clear out return value
 
-  rtn = ros::param::get(param_name, rpc_list);
-
-  if (rtn)
-  {
-    rtn = (rpc_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
-
-    if (rtn)
-    {
-
-      for (int i = 0; i < rpc_list.size(); ++i)
-      {
-        rtn = (rpc_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
-        if (rtn)
-        {
-          ROS_INFO_STREAM("Adding " << rpc_list[i] << " to list parameter");
-          list_param.push_back(static_cast<std::string>(rpc_list[i]));
-        }
-        else
-        {
-          ROS_ERROR_STREAM("List item for: " << param_name << " not of string type");
-        }
-      }
-    }
-    else
-    {
-      ROS_ERROR_STREAM("Parameter: " << param_name << " not of list type");
-    }
-  }
-  else
+  if (!ros::param::get(param_name, rpc_list))
   {
     ROS_ERROR_STREAM("Failed to get parameter: " << param_name);
+    return false;
   }
 
-  return rtn;
+  if (!getListParam(rpc_list, list_param))
+  {
+    ROS_ERROR_STREAM("Failed to parse parameter: " << param_name);
+    return false;
+  }
 
+  return true;
+}
+
+bool getListParam(const std::string param_name, std::vector<JointGroupMap> & list_param)
+{
+  XmlRpc::XmlRpcValue rpc_list;
+
+  list_param.clear(); //clear out return value
+
+  if (!ros::param::get(param_name, rpc_list))
+  {
+    ROS_ERROR_STREAM("Failed to get parameter: " << param_name);
+    return false;
+  }
+
+  if (rpc_list.getType() != XmlRpc::XmlRpcValue::TypeArray)
+  {
+    ROS_ERROR_STREAM("Parameter: " << param_name << " not of list type");
+    return false;
+  }
+
+  for (int i = 0; i < rpc_list.size(); ++i)
+  {
+    JointGroupMap map;
+    if (!map.parse(rpc_list[i]))
+    {
+      ROS_ERROR_STREAM("Failed to parse parameter: " << param_name
+                       << "[" << i << "]");
+      return false;
+    }
+
+    list_param.push_back(map);
+  }
+
+  return true;
+}
+
+bool getListParam(XmlRpc::XmlRpcValue rpc_list,
+                  std::vector<std::string> & list_param)
+{
+  list_param.clear();
+
+  if (rpc_list.getType() != XmlRpc::XmlRpcValue::TypeArray)
+  {
+    ROS_ERROR("parameter not of list type");
+    return false;
+  }
+
+  for (int i = 0; i < rpc_list.size(); ++i)
+  {
+    if (rpc_list[i].getType() != XmlRpc::XmlRpcValue::TypeString)
+    {
+      ROS_ERROR_STREAM("List item " << i << " not of string type");
+      return false;
+    }
+
+    ROS_DEBUG_STREAM("Adding " << rpc_list[i] << " to list parameter");
+    list_param.push_back(static_cast<std::string>(rpc_list[i]));
+  }
+
+  return true;
 }
 
 std::string vec2str(const std::vector<std::string> &vec)
@@ -93,10 +130,17 @@ std::string vec2str(const std::vector<std::string> &vec)
   return "[" + s.erase(s.length()-2) + "]";
 }
 
-bool getJointNames(const std::string joint_list_param, const std::string urdf_param,
+bool getJointNames(const std::string joint_list_param_, const std::string urdf_param_,
 		           std::vector<std::string> & joint_names)
 {
+  std::string joint_list_param(joint_list_param_);
+  std::string urdf_param(urdf_param_);
+
   joint_names.clear();
+
+  // use default parameter-names, if none specified
+  if (joint_list_param.empty()) joint_list_param = "controller_joint_names";
+  if (urdf_param.empty()) urdf_param = "robot_description";
 
   // 1) Try to read explicit list of joint names
   if (ros::param::has(joint_list_param) && getListParam(joint_list_param, joint_names))
@@ -150,6 +194,81 @@ bool getJointVelocityLimits(const std::string urdf_param_name, std::map<std::str
   }
   
   return true;
+}
+
+bool getJointMap(const std::string joint_map_param_,
+                 std::vector<JointGroupMap> & joint_map)
+{
+  std::string joint_map_param(joint_map_param_);
+
+  joint_map.clear();
+
+  // use default parameter-name, if none specified
+  if (joint_map_param.empty()) joint_map_param = "controller_joint_map";
+
+  // 1) Try to read explicit joint map
+  if (ros::param::has(joint_map_param) && getListParam(joint_map_param, joint_map))
+  {
+    ROS_INFO_STREAM("Found user-specified joint map in '" << joint_map_param << "':");
+    for (int i=0; i<joint_map.size(); ++i)
+      ROS_INFO_STREAM("  " << joint_map[i].toString());
+    return true;
+  }
+
+  ROS_WARN_STREAM("Unable to find user-specified joint names in '"
+                  << joint_map_param
+                  << "'.  Assuming single-group (id:1) in this namespace.");
+
+  std::vector<std::string> joint_names;
+  if (!getJointNames("", "", joint_names))
+  {
+    ROS_ERROR_STREAM("Failed to get any joint names.  ROS->robot mapping will fail.");
+    return false;
+  }
+
+  joint_map.push_back( JointGroupMap(1, "", joint_names) );
+  return true;
+}
+
+bool JointGroupMap::parse(XmlRpc::XmlRpcValue value)
+{
+  if (value.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+  {
+    ROS_ERROR("JointGroupMap not struct type");
+    return false;
+  }
+
+  if (!value.hasMember("group")
+   || (value["group"].getType() != XmlRpc::XmlRpcValue::TypeInt) )
+  {
+    ROS_ERROR("JointGroupMap 'group' field missing or invalid type");
+    return false;
+  }
+  this->group_id = static_cast<int>(value["group"]);
+
+  if (!value.hasMember("ns")
+   || (value["ns"].getType() != XmlRpc::XmlRpcValue::TypeString) )
+  {
+    ROS_ERROR("JointGroupMap 'ns' field missing or invalid type");
+    return false;
+  }
+  this->ns = static_cast<std::string>(value["ns"]);
+
+  if (!value.hasMember("joints") || !getListParam(value["joints"], this->joints) )
+  {
+    ROS_ERROR("JointGroupMap 'joints' field missing or invalid type");
+    return false;
+  }
+
+  return true;
+}
+
+std::string JointGroupMap::toString()
+{
+  std::stringstream ss;
+  ss << "Grp " << this->group_id << " ('" << this->ns << "'): " << vec2str(this->joints);
+
+  return ss.str();
 }
 
 } //industrial_utils::param

@@ -199,6 +199,176 @@ class MotionControllerSimulator():
 
 
 
+"""
+ControllerJointMap
+
+This class manages the different methods for specifying the ordering and
+group-assignment of joint names in a physical robot controller.  It supports
+both single-group and multi-group specification methods.
+
+"""
+class ControllerJointMap():
+
+    """
+    Constructor of controller joint map
+    """
+    def __init__(self):
+        self.groups_ = []
+        param_names = ('controller_joint_names', 'controller_joint_map')
+
+        if all(rospy.has_param(p) for p in param_names):
+            rospy.logwarn("Both %s and %s are set", \
+                          param_names[0], param_names[1]);
+
+        # try to get joint_map from ROS parameters
+        self.init_multi_group(param_names[1])      # try multi-group first
+        if not self.groups_:
+            self.init_single_group(param_names[0]) # then try single-group
+
+        # if unable to read from parameters, assume default joint-map
+        if not self.groups_:
+            rospy.logwarn("No joint map specified.  Assuming default joints.")
+            self.groups_ = [ self.GroupMap() ]
+
+    """
+    Get a list of ID #s for all motion-groups
+      - order matches original joint_map group-ordering
+    @return list of group-ID #s (int)
+    """
+    def group_ids(self):
+        return [ g.id for g in self.groups_]
+
+    """
+    Get a list of namespaces for all motion-groups
+      - order matches original joint_map group-ordering
+    @return list of namespaces (string)
+    """
+    def namespaces(self):
+        return [ g.ns for g in self.groups_]
+
+    """
+    Get the group-map associated with the specified group-ID
+    @param id group ID
+    @type  int
+    @return matching joint-map (see GroupMap)
+    """
+    def select_by_id(self, id):
+        return [g for g in self.groups_ if g.id == id ]
+
+    """
+    Get the subset of group-maps using the specified namespace
+    @param ns Namespace
+    @type  ns string
+    @return list of joint-maps (see GroupMap)
+    """
+    def select_by_namespace(self, ns):
+        return [g for g in self.groups_ if g.ns == ns]
+
+    """
+    Get the subset of group-maps containing the specified joint names
+    @param ns Namespace
+    @type  ns string
+    @param joints list of joint-names to check
+    @type  list (of strings)
+    @return list of joint-maps (see GroupMap)
+    """
+    def select_by_joints(self, ns, joints):
+        return [g for g in self.select_by_namespace(ns) if set(joints).intersection(g.joints) ]
+
+    """
+    Try to read/parse Single Group (old-style) joint map
+       - assumes groupID = 1 and namespace = "", for backwards-compatibility
+
+    Expected format:
+      [ 'joint_1', 'joint_2', ..., 'joint_N' ]
+
+    @param param name of ROS parameter to read
+    @type  param string
+    """
+    def init_single_group(self, param):
+        try:
+            joint_names = rospy.get_param(param)
+            if not joint_names:
+                rospy.logwarn("%s is empty.  Did you forget to set it?", param)
+        except KeyError:
+            return
+
+        self.groups_ = [ self.GroupMap(joints=joint_names) ]
+
+    """
+    Try to read/parse Multi Group (new-style) joint map
+       - can also be used for single-group robots
+
+    Expected format:
+      [ { group: 1, ns:'', joints:['joint_1', 'joint_2', ..., 'joint_N'] }
+        { group: 3, ns:'other', joints:['joint_A', 'joint_B'] } ]
+
+    @param param name of ROS parameter to read
+    @type  param string
+    """
+    def init_multi_group(self, param):
+        try:
+            joint_map = rospy.get_param(param)
+            if not joint_map:
+                rospy.logwarn("%s is empty.  Did you forget to set it?", param)
+        except KeyError:
+            return
+
+        try:
+            self.groups_ = []
+            for grp in joint_map:
+                group_map = self.GroupMap(grp['group'], grp['ns'], grp['joints'] )
+                if any( g.id == group_map.id for g in self.groups_ ):
+                    raise ValueError("duplicate id found")
+                self.groups_.append( group_map )
+        except:
+            rospy.logerr("invalid %s format", param)
+
+    """
+    Enable iteration through ControllerJointMap object
+    """
+    def __iter__(self):
+        for group in self.groups_:
+            yield group
+
+    """
+    Enable length-function of ControllerJointMap object
+    @return number of groups defined (int)
+    """
+    def __len__(self):
+        return len(self.groups_)
+
+    """
+    Enable item access of ControllerJointMap object
+      - example: joint_map[0]
+    @param idx index in specified joint-map list
+    @type  idx int
+    @return joint map data (see GroupMap)
+    """
+    def __getitem__(self, idx):
+        return self.groups_[idx]
+
+    """
+    Joint Map data for a single motion group
+      - Note that this is defined as an inner class of ControllerJointMap
+    """
+    class GroupMap:
+        """
+        GroupMap constructor
+        @param id group ID
+        @type  id int
+        @param ns namespace of pub/sub topics for this group
+        @type  ns string
+        @param joints list of joint-names associated with this group (in ctrlr-order)
+        @type  list (of strings)
+        """
+        def __init__(self, id=1, ns="", joints=None):
+            self.id = id
+            self.ns = ns
+            if (joints):
+                self.joints = joints
+            else:
+                self.joints = [ "joint_"+str(i+1) for i in range(6) ]
 
 """
 IndustrialRobotSimulator
@@ -231,41 +401,58 @@ class IndustrialRobotSimulatorNode():
         rospy.logdebug("Setting publish rate (hz) based on parameter: %f", self.pub_rate)
 
         # Joint names
-        def_joint_names = ["joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"]
-        self.joint_names = rospy.get_param('controller_joint_names', def_joint_names)
-        if len(self.joint_names) == 0:
-            rospy.logwarn("Joint list is empty, did you set controller_joint_name?")
-        rospy.loginfo("Simulating manipulator with %d joints: %s", len(self.joint_names), ", ".join(self.joint_names))
+        self.joint_map = ControllerJointMap()
+        rospy.loginfo("Simulating robot with %d groups:", len(self.joint_map) )
+        for group in self.joint_map:
+            rospy.loginfo("  Grp %d: %s", group.id, ", ".join(group.joints) )
 
         # Setup initial joint positions
-        num_joints = len(self.joint_names)
-        initial_joint_state = rospy.get_param('initial_joint_state', [0]*num_joints)
-        same_len = len(initial_joint_state) == num_joints
-        all_num  = all(type(x) is int or type(x) is float for x in initial_joint_state)
-        if not same_len or not all_num:
-            initial_joint_state = [0]*num_joints
-            rospy.logwarn("Invalid initial_joint_state parameter, defaulting to all-zeros "
-                "(len: %s, types: %s).", same_len, all_num)
-        rospy.loginfo("Using initial joint state: %s", str(initial_joint_state))
+        initial_joint_states = self.get_initial_positions('initial_joint_state')
+        rospy.loginfo("Using initial joint states: ")
+        for id, init_pos in initial_joint_states.iteritems():
+            rospy.loginfo("  Grp %d: %s", id, str(init_pos))
 
         # retrieve update rate
         motion_update_rate = rospy.get_param('motion_update_rate', 100.);  #set param to 0 to ignore interpolated motion
-        self.motion_ctrl = MotionControllerSimulator(num_joints, initial_joint_state, update_rate=motion_update_rate)
 
-        # Published to joint states
-        rospy.logdebug("Creating joint state publisher")
-        self.joint_state_pub = rospy.Publisher('joint_states', JointState, queue_size=1)
 
-        # Published to joint feedback
-        rospy.logdebug("Creating joint feedback publisher")
-        self.joint_feedback_pub = rospy.Publisher('feedback_states', FollowJointTrajectoryFeedback, queue_size=1)
+        # create motion-interpolators for each group
+        self.robots = {}
+        for group in self.joint_map:
+            self.robots[group.id] = MotionControllerSimulator( \
+                                        len(group.joints), \
+                                        initial_joint_states[group.id], \
+                                        update_rate=motion_update_rate)
 
-        rospy.logdebug("Creating robot status publisher")
-        self.robot_status_pub = rospy.Publisher('robot_status', RobotStatus, queue_size=1)
+        # create publishers/subscribers for each namespace
+        self.topics = {}
+        for ns in set(self.joint_map.namespaces()):  # only consider unique names
 
-        # Subscribe to a joint trajectory
-        rospy.logdebug("Creating joint trajectory subscriber")
-        self.joint_path_sub = rospy.Subscriber('joint_path_command', JointTrajectory, self.trajectory_callback)
+            # Joint State publisher
+            name = self.prefix_ns(ns, 'joint_states')
+            rospy.logdebug("Publishing on %s", name)
+            joint_state_pub = rospy.Publisher(name, JointState, queue_size=1)
+
+            # Trajectory Feedback publisher
+            name = self.prefix_ns(ns, 'feedback_states')
+            rospy.logdebug("Publishing on %s", name)
+            joint_feedback_pub = rospy.Publisher(name, FollowJointTrajectoryFeedback, queue_size=1)
+
+            # Robot Status publisher
+            name = self.prefix_ns(ns, 'robot_status')
+            rospy.logdebug("Publishing on %s", name)
+            robot_status_pub = rospy.Publisher(name, RobotStatus, queue_size=1)
+
+            # Joint Trajectory subscriber
+            name = self.prefix_ns(ns, 'joint_path_command')
+            rospy.logdebug("Subscribing to %s", name)
+            joint_path_sub = rospy.Subscriber(name, JointTrajectory, self.trajectory_callback, ns)
+
+            # Save pub/sub handles to topic-map
+            self.topics[ns] = self.TopicHandles(joint_state_pub, \
+                                                joint_feedback_pub, \
+                                                robot_status_pub, \
+                                                joint_path_sub)
 
         # JointStates timed task (started automatically)
         period = rospy.Duration(1.0/self.pub_rate)
@@ -277,8 +464,57 @@ class IndustrialRobotSimulatorNode():
         self.svc_get_robot_info = rospy.Service('get_robot_info', GetRobotInfo, self.cb_svc_get_robot_info)
 
         # Clean up init
-        rospy.on_shutdown(self.motion_ctrl.shutdown)
+        rospy.on_shutdown(self.shutdown)
 
+    """
+    Lookup (optional) initial joint positions, in ROS param
+
+    Expected format:
+      [ [ pos_G1J1, pos_G1J2, ..., pos_G1JN ],
+        [ pos_G2J1, pos_G2J2, ..., pos_G2JN ] ]
+
+    @param param name of ROS parameter to check
+    @type  param string
+    @return dict of initial-position arrays (grpID / pos-array)
+    """
+    def get_initial_positions(self, param):
+        groups = self.joint_map
+
+        # create default initial positions
+        default_init_pos = {g.id: [0]*len(g.joints) for g in groups }
+
+        # check for the optional ROS parameter
+        try:
+            init_pos = rospy.get_param(param)
+        except:
+            return default_init_pos
+
+        # check for single-group case
+        if len(groups)==1 and len(init_pos)==len(groups[0].joints):
+            return {groups[0].id: init_pos }
+
+        # run validity checks for multi-group case
+        try:
+            if len(init_pos) <> len(groups):
+                raise ValueError("incorrect # of groups")
+            for ip, grp in zip(init_pos, groups):
+                if len(ip) <> len(grp.joints):
+                    raise ValueError("incorrect # of joints")
+                if not all(isinstance(x, (int, float)) for x in ip):
+                    raise ValueError("not numeric")
+        except ValueError as e:
+            print e
+            rospy.logwarn("Invalid %s parameter. Defaulting to all-zeros", param)
+            return default_init_pos
+
+        return {id: ip for id,ip in zip(self.joint_map.group_ids(), init_pos)}
+
+    @staticmethod
+    def prefix_ns(ns, name):
+        if (ns):
+            return ns + '/' + name
+        else:
+            return name
 
     """
     Service callback for GetRobotInfo() service. Returns fake information.
@@ -293,34 +529,37 @@ class IndustrialRobotSimulatorNode():
     state and status information for the robot.
     """
     def publish_worker(self, event):
-        self.joint_state_publisher()
-        self.robot_status_publisher()
-
+        for ns in self.joint_map.namespaces():
+            self.joint_state_publisher(ns)
+            self.robot_status_publisher(ns)
 
     """
     The joint state publisher publishes the current joint state and the current
     feedback state (as these are closely related)
     """
-    def joint_state_publisher(self):
+    def joint_state_publisher(self, ns):
         try:
             joint_state_msg = JointState()
             joint_fb_msg = FollowJointTrajectoryFeedback()
             time = rospy.Time.now()
+            groups = self.joint_map.select_by_namespace(ns)
 
             with self.lock:
-                #Joint states
+                # Create Joint states message
                 joint_state_msg.header.stamp = time
-                joint_state_msg.name = self.joint_names
-                joint_state_msg.position = self.motion_ctrl.get_joint_positions()
+                for group in groups:
+                    jnt_pos = self.robots[group.id].get_joint_positions()
+                    joint_state_msg.name.extend(group.joints)
+                    joint_state_msg.position.extend(jnt_pos)
 
-                self.joint_state_pub.publish(joint_state_msg)
+            # Create Joint feedback message
+            joint_fb_msg.header = joint_state_msg.header
+            joint_fb_msg.joint_names = joint_state_msg.name
+            joint_fb_msg.actual.positions = joint_state_msg.position
 
-                #Joint feedback
-                joint_fb_msg.header.stamp = time
-                joint_fb_msg.joint_names = self.joint_names
-                joint_fb_msg.actual.positions = self.motion_ctrl.get_joint_positions()
-
-                self.joint_feedback_pub.publish(joint_fb_msg)
+            # publish messages
+            self.topics[ns].joint_state_pub.publish(joint_state_msg)
+            self.topics[ns].joint_feedback_pub.publish(joint_fb_msg)
 
         except Exception as e:
             rospy.logerr('Unexpected exception in joint state publisher: %s', e)
@@ -340,17 +579,20 @@ class IndustrialRobotSimulatorNode():
     The value of 'in_motion' is derived from the state of the
     MotionControllerSimulator.
     """
-    def robot_status_publisher(self):
+    def robot_status_publisher(self, ns):
         try:
+            groups = self.joint_map.select_by_namespace(ns)
+            in_motion = any(self.robots[g.id].is_in_motion() for g in groups)
+
             msg = RobotStatus()
             msg.mode.val            = RobotMode.AUTO
             msg.e_stopped.val       = TriState.FALSE
             msg.drives_powered.val  = TriState.TRUE
             msg.motion_possible.val = TriState.TRUE
-            msg.in_motion.val       = self.motion_ctrl.is_in_motion()
+            msg.in_motion.val       = in_motion
             msg.in_error.val        = TriState.FALSE
             msg.error_code          = 0
-            self.robot_status_pub.publish(msg)
+            self.topics[ns].robot_status_pub.publish(msg)
 
         except Exception as e:
             rospy.logerr('Unexpected exception: %s', e)
@@ -362,14 +604,24 @@ class IndustrialRobotSimulatorNode():
 
     @param msg_in: joint trajectory message
     @type  msg_in: JointTrajectory
+    @param ns:     Namespace
+    @type  ns:     string
     """
-    def trajectory_callback(self, msg_in):
+    def trajectory_callback(self, msg_in, ns):
         try:
             rospy.logdebug('Received trajectory with %s points, executing callback', str(len(msg_in.points)))
 
-            if self.motion_ctrl.is_in_motion():
-                if len(msg_in.points) > 0:
-                    rospy.logerr('Received trajectory while still in motion, trajectory splicing not supported')
+            groups = self.joint_map.select_by_joints(ns, msg_in.joint_names)
+            for group in groups:
+                motion_ctrl = self.robots[group.id]
+
+                if motion_ctrl.is_in_motion():
+                    if len(msg_in.points) > 0:
+                        rospy.logerr('Received trajectory while still in motion, trajectory splicing not supported')
+                    else:
+                        rospy.logdebug('Received empty trajectory while still in   motion, stopping current trajectory')
+                    motion_ctrl.stop()
+
                 else:
                     rospy.logdebug('Received empty trajectory while still in motion, stopping current trajectory')
                 self.motion_ctrl.stop()
@@ -388,18 +640,19 @@ class IndustrialRobotSimulatorNode():
     """
     Remaps point to controller joint order
 
-    @param keys:   keys defining joint value order
-    @type  keys:   list
-    @param point:  joint trajectory point
-    @type  point:  JointTrajectoryPoint
+    @param ctrl_keys: keys defining controller joint order
+    #type  ctrl_keys: list
+    @param traj_keys: keys defining joint value order
+    @type  traj_keys: list
+    @param traj_pt:   joint trajectory point
+    @type  traj_pt:   JointTrajectoryPoint
 
     @return point: reorder point
     @type point: JointTrajectoryPoint
     """
-    def _to_controller_order(self, keys, point):
-        #rospy.loginfo('to controller order, keys: %s, point: %s', str(keys), str(point))
-        pt_rtn = copy.deepcopy(point)
-        pt_rtn.positions = self._remap_order(self.joint_names, keys, point.positions)
+    def _to_controller_order(self, ctrl_keys, traj_keys, traj_pt):
+        pt_rtn = copy.deepcopy(traj_pt)
+        pt_rtn.positions = self._remap_order(ctrl_keys, traj_keys, traj_pt.positions)
 
         return pt_rtn
 
@@ -459,6 +712,18 @@ class IndustrialRobotSimulatorNode():
         resp.code.val = ServiceReturnCode.SUCCESS
         return resp
 
+    def shutdown(self):
+        for robot in self.robots.itervalues():
+            robot.shutdown()
+
+    class TopicHandles:
+
+        def __init__(self, joint_state_pub, joint_feedback_pub, \
+                           robot_status_pub, joint_path_sub):
+            self.joint_state_pub      = joint_state_pub
+            self.joint_feedback_pub   = joint_feedback_pub
+            self.robot_status_pub     = robot_status_pub
+            self.joint_trajectory_sub = joint_path_sub
 
 if __name__ == '__main__':
     try:

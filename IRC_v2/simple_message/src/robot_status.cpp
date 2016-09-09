@@ -147,7 +147,7 @@ void RobotStatus::copyFrom(RobotStatus &src)
   this->setMotionPossible(src.getMotionPossible());
 }
 
-bool RobotStatus::operator==(RobotStatus &rhs)
+bool RobotStatus::operator==(const RobotStatus &rhs) const
 {
   return this->drives_powered_ == rhs.drives_powered_ && this->e_stopped_ == rhs.e_stopped_
       && this->error_code_ == rhs.error_code_ && this->in_error_ == rhs.in_error_ && this->in_motion_ == rhs.in_motion_
@@ -194,6 +194,29 @@ bool RobotStatus::unload(industrial::byte_array::ByteArray *buffer)
   else
   {
     LOG_ERROR("Failed to unload robot status");
+    rtn = false;
+  }
+
+  return rtn;
+}
+
+bool RobotStatus::unloadFront(industrial::byte_array::ByteArray *buffer)
+{
+  bool rtn = false;
+
+  LOG_COMM("Executing robot status unload");
+  if (buffer->unloadFront(this->drives_powered_) && buffer->unloadFront(this->e_stopped_)
+      && buffer->unloadFront(this->error_code_) && buffer->unloadFront(this->in_error_)
+      && buffer->unloadFront(this->in_motion_) && buffer->unloadFront(this->mode_)
+      && buffer->unloadFront(this->motion_possible_))
+  {
+
+    rtn = true;
+    LOG_COMM("Robot status successfully unloaded (from front)");
+  }
+  else
+  {
+    LOG_ERROR("Failed to unload robot status (from front)");
     rtn = false;
   }
 

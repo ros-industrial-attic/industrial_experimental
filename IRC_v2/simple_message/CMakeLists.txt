@@ -37,12 +37,19 @@ set(SRC_FILES src/byte_array.cpp
 	src/joint_traj_pt_full.cpp
 	src/joint_traj.cpp
 	src/robot_status.cpp
+	src/dynamic_joint_pt.cpp
+	src/dynamic_joint_state.cpp
+	src/dynamic_group_status.cpp
 
 	src/messages/joint_message.cpp
 	src/messages/joint_feedback_message.cpp
 	src/messages/joint_traj_pt_message.cpp
 	src/messages/joint_traj_pt_full_message.cpp
 	src/messages/robot_status_message.cpp
+	src/messages/dynamic_joint_pt_message.cpp
+	src/messages/dynamic_joint_state_message.cpp
+	src/messages/dynamic_group_status_message.cpp
+	src/messages/speed_ovr_message.cpp
 
 	src/simple_comms_fault_handler.cpp)
 					

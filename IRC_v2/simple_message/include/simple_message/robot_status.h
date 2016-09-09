@@ -142,12 +142,12 @@ void init();
 void init(TriState drivesPowered, TriState eStopped, industrial::shared_types::shared_int errorCode, TriState inError,
           TriState inMotion, RobotMode mode, TriState motionPossible);
 
-TriState getDrivesPowered()
+TriState getDrivesPowered() const
 {
   return TriState(drives_powered_);
 }
 
-TriState getEStopped()
+TriState getEStopped() const
 {
   return TriState(e_stopped_);
 }
@@ -157,22 +157,22 @@ industrial::shared_types::shared_int getErrorCode() const
   return error_code_;
 }
 
-TriState getInError()
+TriState getInError() const
 {
   return TriState(in_error_);
 }
 
-TriState getInMotion()
+TriState getInMotion() const
 {
   return TriState(in_motion_);
 }
 
-RobotMode getMode()
+RobotMode getMode() const
 {
   return RobotMode(mode_);
 }
 
-TriState getMotionPossible()
+TriState getMotionPossible() const
 {
   return TriState(motion_possible_);
 }
@@ -224,7 +224,19 @@ void copyFrom(RobotStatus &src);
  *
  * \return true if equal
  */
-bool operator==(RobotStatus &rhs);
+bool operator==(const RobotStatus &rhs) const;
+
+/**
+ * \brief != operator implementation
+ *
+ * \return true if not-equal
+ */
+bool operator!=(const RobotStatus &rhs) const
+{
+  return !operator==(rhs);
+}
+
+bool unloadFront(industrial::byte_array::ByteArray *buffer);
 
 // Overrides - SimpleSerialize
 bool load(industrial::byte_array::ByteArray *buffer);

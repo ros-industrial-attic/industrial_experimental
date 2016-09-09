@@ -74,7 +74,10 @@ bool SimpleMessage::init(int msgType, int commType, int replyCode, ByteArray & d
   this->setMessageType(msgType);
   this->setCommType(commType);
   this->setReplyCode(replyCode);
-  this->data_.copyFrom(data);
+  if (data.getBufferSize()>0)
+    this->data_.copyFrom(data);
+  else
+    this->data_.init();
 
   return this->validateMessage();
 }

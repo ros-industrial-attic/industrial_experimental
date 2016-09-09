@@ -82,8 +82,14 @@ namespace StandardMsgTypes
  ADEPT_MSG_BEGIN    = 1200,
  ABB_MSG_BEGIN      = 1300,
  FANUC_MSG_BEGIN    = 1400,
- MOTOMAN_MSG_BEGIN  = 2000
-  };
+ MOTOMAN_MSG_BEGIN  = 2000,
+
+ // temporarily assign new messages in the "Freely Assignable" id range
+ DYNAMIC_JOINT_PT     = 65001,  // TODO - reassign as "std" msg
+ DYNAMIC_JOINT_STATE  = 65002,  // TODO - reassign as "std" msg
+ DYNAMIC_GROUP_STATUS = 65003,  // TODO - reassign as "std" msg
+ SPEED_OVR            = 65005,  // TODO - reassign as "std" msg
+ };
 }
 typedef StandardMsgTypes::StandardMsgType StandardMsgType;
 

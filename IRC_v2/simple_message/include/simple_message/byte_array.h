@@ -266,6 +266,15 @@ public:
   bool unload(void* value, const industrial::shared_types::shared_int byteSize);
 
   /**
+   * \brief unloads a boolean value fromthe beginning of the byte array
+   *
+   * \param value value to unload
+   *
+   * \return true on success, false otherwise (array is empty)
+   */
+  bool unloadFront(industrial::shared_types::shared_bool &value);
+  
+  /**
    * \brief unloads a double value from the beginning of the byte array.
    * If byte swapping is enabled, then the bytes are swapped.
    *
