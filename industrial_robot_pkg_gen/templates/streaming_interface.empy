@@ -12,7 +12,7 @@
 
   <rosparam command="load" file="$(find @(package))/config/joint_names_@(model).yaml" />
 
-  <include file="$(find motoman_driver)/launch/robot_interface_streaming.launch">
+  <include file="$(find @(package))/launch/robot_interface_streaming.launch">
     <arg name="robot_ip"   value="$(arg robot_ip)" />
   </include>
 </launch>
