@@ -623,13 +623,11 @@ class IndustrialRobotSimulatorNode():
                     motion_ctrl.stop()
 
                 else:
-                    rospy.logdebug('Received empty trajectory while still in motion, stopping current trajectory')
-                self.motion_ctrl.stop()
-
-            else:
-                for point in msg_in.points:
-                    point = self._to_controller_order(msg_in.joint_names, point)
-                    self.motion_ctrl.add_motion_waypoint(point)
+                    for point in msg_in.points:
+                        point = self._to_controller_order(group.joints, \
+                                                          msg_in.joint_names, \
+                                                          point)
+                        motion_ctrl.add_motion_waypoint(point)
 
         except Exception as e:
             rospy.logerr('Unexpected exception: %s', e)
