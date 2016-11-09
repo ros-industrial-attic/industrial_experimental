@@ -252,9 +252,6 @@ bool RobotStatusRelayHandler::aggregate(const std::map<int, StatusMsg>&in,
       if (this->joint_map_[map_idx].group_id != group_id)
         continue;
 
-      // keep the latest timestamp
-      out[ns].header.stamp = std::max(in_msg.header.stamp, out[ns].header.stamp);
-
       // aggregate with existing messages
       if (out.count(ns)==0)
         out[ns] = in_msg;
@@ -286,7 +283,11 @@ RobotStatusRelayHandler::StatusMsg RobotStatusRelayHandler::aggregate(const Stat
 {
   StatusMsg out;
 
+  // keep the latest timestamp
+  ros::Time maxTime  = std::max(msg1.header.stamp, msg2.header.stamp);
+
   out.header          = msg1.header;
+  out.header.stamp    = maxTime;
   out.mode            = allOrUnknown(msg1.mode, msg2.mode);
   out.e_stopped       = allOrUnknown(msg1.e_stopped, msg2.e_stopped);
   out.drives_powered  = allOrUnknown(msg1.drives_powered, msg2.drives_powered);
