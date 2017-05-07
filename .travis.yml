@@ -10,6 +10,8 @@ notifications:
 #    recipients:
 #      - jane@doe
 env:
+  global:
+    - ROS_PARALLEL_TEST_JOBS=-j1
   matrix:
     - USE_DEB=true  ROS_DISTRO="indigo" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
     - USE_DEB=true  ROS_DISTRO="indigo" ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
