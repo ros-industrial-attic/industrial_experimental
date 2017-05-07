@@ -4,7 +4,7 @@ from catkin_pkg.python_setup import generate_distutils_setup
 
 d = generate_distutils_setup(
     packages=['industrial_robot_pkg_gen'],
-    scripts=['src/industrial_robot_pkg_gen'],
+    scripts=['scripts/package_generator'],
     package_dir={'': 'src'}
 )
 
